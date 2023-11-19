@@ -129,7 +129,7 @@ def get_download_url(video_url):
         try:
             video = driver.find_element(by='tag name', value='video')
             break
-        except Exception as e:
+        except Exception:
             print('未渲染，正在重试')
             time.sleep(1)
     src = video.get_attribute('src')
