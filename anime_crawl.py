@@ -150,23 +150,23 @@ def save_on_mysql():
     connect.close()
 
 
-def save_on_excel(nested_list):
+def save_on_excel(data_list):
     """
     保存到excel
-    :param nested_list:
+    :param data_list:
     :return:
     """
-    pd.DataFrame(nested_list, columns=['title', 'number', 'url']).to_excel(f'{redis.get("title").decode("utf-8")}.xlsx',
-                                                                           index=False)
+    pd.DataFrame(data_list, columns=['title', 'number', 'url']).to_excel(f'{redis.get("title").decode("utf-8")}.xlsx',
+                                                                         index=False)
 
 
-def download_video(nested_list):
+def download_video(data_list):
     """
     下载视频
-    :param nested_list:
+    :param data_list:
     :return:
     """
-    for video_info in nested_list:
+    for video_info in data_list:
         print(video_info)
         resp = requests.get(video_info[2], stream=True)
         total = int(resp.headers.get('content-length', 0))
