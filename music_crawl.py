@@ -106,6 +106,7 @@ def find_music_on_db_by_singer_name(singer_name):
     sql = '''select * from tb_music where singer_name like %s"%%"'''
     cursor.execute(sql, singer_name)
     results = cursor.fetchall()
+    cursor.close()
     return results
 
 
@@ -136,6 +137,7 @@ def download_music_by_id(results):
                 print('下载中...')
                 download_music(result[2], result[1], result[3])
                 print('下载完成')
+                connect.close()
                 sys.exit(0)
         print('没有id为{}的歌曲'.format(id_))
     else:
