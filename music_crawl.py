@@ -4,6 +4,7 @@ import sys
 import time
 
 import pymysql
+import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -111,7 +112,7 @@ def find_music_on_db_by_singer_name(singer_name):
 def download_music(url, song_name, singer_name):
     if not os.path.exists(f'D:\\音乐\\{singer_name}'):
         os.mkdir(f'D:\\音乐\\{singer_name}')
-    content = proxy_util.get_content(url)
+    content = requests.get(url).content
     with open('D:\\音乐\\{}\\{}-{}.mp3'.format(singer_name, song_name, singer_name), 'wb') as f:
         f.write(content)
 
