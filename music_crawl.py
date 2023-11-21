@@ -10,6 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 import proxy_util
+import tongzhong_crawl
 
 base_url = 'https://zz123.com'
 search_url = base_url + '/search/?key='
@@ -55,6 +56,10 @@ def search(key):
 def selenium_crawl(url):
     driver = webdriver.Edge()
     driver.get(url)
+    if driver.title == '404':
+        print('没有找到歌手')
+        driver.close()
+        return
     # 定义一个初始值
     temp_height = 0
     music_list = []
@@ -155,6 +160,11 @@ def choice():
     results = find_music_on_db_by_singer_name(singer_name)
     download_music_by_id(results)
     music_list = search(singer_name)
+    if music_list is None or music_list.__len__() == 0:
+        print('没有歌曲')
+        print('切换搜索源...')
+        tongzhong_crawl.run(singer_name)
+        sys.exit(0)
     sql = "insert into tb_music(song_name,download_url,singer_name) values(%s,%s,%s)"
     cursor.executemany(sql, music_list)
     connect.commit()
