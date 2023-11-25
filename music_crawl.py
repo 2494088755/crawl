@@ -19,7 +19,8 @@ connect = pymysql.connect(host='localhost', user='root', password='root', db='mu
 
 def search(key):
     url = search_url + key
-    req = proxy_util.get(url)
+    # req = proxy_util.get(url)
+    req = requests.get(url, headers=proxy_util.headers).text
     soup = BeautifulSoup(req, 'html.parser')
     all_singer_music = soup.find_all('div', attrs={'class': 'item-desc'})
     singer_name_list = soup.find_all('div', attrs={'class': 'singername text-ellipsis color-link-content-secondary'})
@@ -116,6 +117,8 @@ def find_music_on_db_by_singer_name(singer_name):
 
 
 def download_music(url, song_name, singer_name):
+    if '/' in singer_name:
+        singer_name = singer_name.replace('/', ' ')
     if not os.path.exists(f'D:\\音乐\\{singer_name}'):
         os.mkdir(f'D:\\音乐\\{singer_name}')
     content = requests.get(url).content
@@ -156,7 +159,7 @@ def choice():
     :return:
     """
     cursor = connect.cursor()
-    singer_name = input("请输入歌手名字：")
+    singer_name = input("请输入关键词：")
     results = find_music_on_db_by_singer_name(singer_name)
     download_music_by_id(results)
     music_list = search(singer_name)

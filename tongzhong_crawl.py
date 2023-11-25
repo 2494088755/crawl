@@ -1,7 +1,6 @@
-import pymysql
+import pandas as pd
 import requests
 from requests import ReadTimeout
-import pandas as pd
 
 from music_crawl import download_music
 
@@ -48,8 +47,9 @@ def download(df):
     singer_name = df.loc[int(index)]['singer']
     print('正在下载：' + song_name + ' - ' + singer_name)
     download_url = requests.get(get_download_url_api + id_).json()['data']
-    print('https:' + download_url)
-    download_music('https:' + download_url, song_name, singer_name)
+    if 'https:' not in download_url:
+        download_url = 'https:' + download_url
+    download_music(download_url, song_name, singer_name)
     print('下载完成')
 
 
