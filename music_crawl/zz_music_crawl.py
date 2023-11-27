@@ -19,38 +19,21 @@ connect = pymysql.connect(host='localhost', user='root', password='root', db='mu
 
 def search(key):
     url = search_url + key
-    # req = proxy_util.get(url)
     req = requests.get(url, headers=proxy_util.headers).text
     soup = BeautifulSoup(req, 'html.parser')
     all_singer_music = soup.find_all('div', attrs={'class': 'item-desc'})
-    singer_name_list = soup.find_all('div', attrs={'class': 'singername text-ellipsis color-link-content-secondary'})
-    singer_href = ''
-    for name in singer_name_list:
-        singer_name = name.text.replace('\n', '')
-        if singer_name == key:
-            singer_href = base_url + name.a['href']
-            break
-    if singer_href == '':
-        print('没有找到歌手')
-        return
     if all_singer_music.__len__() == 20:
-        return selenium_crawl(singer_href)
+        return selenium_crawl(url)
+    if all_singer_music.__len__() == 0:
+        print('zz源没有找到')
+        return None
     music_list = []
-    for i in all_singer_music:
-        beautiful_soup = BeautifulSoup(str(i), 'html.parser')
-        music_title = \
-            beautiful_soup.find('div', attrs={'class': 'songname text-ellipsis color-link-content-primary'}).find('a')[
-                'title']
-        music_href = \
-            beautiful_soup.find('div', attrs={'class': 'songname text-ellipsis color-link-content-primary'}).find('a')[
-                'href']
-        singer_name = beautiful_soup.find('div',
-                                          attrs={'class': 'singername text-ellipsis color-link-content-secondary'}).text
-        singer_href = beautiful_soup.find('div',
-                                          attrs={'class': 'singername text-ellipsis color-link-content-secondary'}).a[
-            'href']
-        singer_name = singer_name.replace('\n', '')
-        music_list.append(save_on_list(music_title, music_href, singer_name, singer_href))
+    for music in all_singer_music:
+        song_name = music.find('div', attrs={'class': 'songname text-ellipsis color-link-content-primary'}).a['title']
+        singer_name = music.find('div', attrs={'class': 'singername text-ellipsis color-link-content-secondary'}).a[
+            'title']
+        song_href = music.find('div', attrs={'class': 'songname text-ellipsis color-link-content-primary'}).a['href']
+        music_list.append(save_on_list(song_name, song_href, singer_name))
     return music_list
 
 
@@ -58,9 +41,9 @@ def selenium_crawl(url):
     driver = webdriver.Edge()
     driver.get(url)
     if driver.title == '404':
-        print('没有找到歌手')
+        print('zz源没有找到')
         driver.close()
-        return
+        return None
     # 定义一个初始值
     temp_height = 0
     music_list = []
@@ -84,33 +67,25 @@ def selenium_crawl(url):
         music_title = a_list[0].get_property('title')
         music_href = a_list[0].get_property('href')
         singer_name = a_list[1].get_property('title')
-        singer_href = a_list[0].get_property('href')
         singer_name = singer_name.replace('\n', '')
-        music_list.append(save_on_list(music_title, music_href, singer_name, singer_href))
-    driver.quit()
+        music_list.append(save_on_list(music_title, music_href, singer_name))
+    driver.close()
     return music_list
 
 
-def save_on_list(music_title, music_href, singer_name, singer_href):
+def save_on_list(music_title, music_href, singer_name):
     music = [music_title]
     music_href = 'https://zz123.com/xplay/?act=songplay&id={}&email'.format(music_href.split('/')[-1].split('.')[0])
     music.append(music_href)
     music.append(singer_name)
-    # music.append(base_url + singer_href)
     return music
 
 
-def search_one_music(music_list, key):
-    for music in music_list:
-        if key in music[0]:
-            return music
-    return None
-
-
-def find_music_on_db_by_singer_name(singer_name):
+def find_music_on_db_by_search_key(search_key):
     cursor = connect.cursor()
-    sql = '''select * from tb_music where singer_name like %s"%%"'''
-    cursor.execute(sql, singer_name)
+    sql = '''select * from tb_music where singer_name like %s"%%" or song_name like %s"%%"'''
+    val = (search_key, search_key)
+    cursor.execute(sql, val)
     results = cursor.fetchall()
     cursor.close()
     return results
@@ -121,23 +96,21 @@ def download_music(url, song_name, singer_name):
         singer_name = singer_name.replace('/', ' ')
     if not os.path.exists(f'D:\\音乐\\{singer_name}'):
         os.mkdir(f'D:\\音乐\\{singer_name}')
-    content = requests.get(url).content
+    if 'http' in url:
+        content = requests.get(url).content
+    else:
+        download_url = requests.get(tongzhong_crawl.get_download_url_api + url).json()['data']
+        content = requests.get(download_url).content
     with open('D:\\音乐\\{}\\{}-{}.mp3'.format(singer_name, song_name, singer_name), 'wb') as f:
         f.write(content)
 
 
-def download_music_by_id(results):
+def download_music_by_id(results, search_key):
     if results.__len__() > 0:
         for result in results:
             print(result)
-        song_name = input("请输入歌曲名字：")
-        is_exist = False
-        for result in results:
-            if song_name in result[1]:
-                is_exist = True
-                print(result)
-        if not is_exist:
-            print('没有{}该歌曲'.format(song_name))
+        if input('没找到？是否换源搜索y/n') == 'y':
+            tongzhong_crawl.run(search_key)
             sys.exit(0)
         id_ = int(input("输入序号下载歌曲："))
         for result in results:
@@ -159,23 +132,24 @@ def choice():
     :return:
     """
     cursor = connect.cursor()
-    singer_name = input("请输入关键词：")
-    results = find_music_on_db_by_singer_name(singer_name)
-    download_music_by_id(results)
-    music_list = search(singer_name)
+    search_key = input("请输入关键词：")
+    results = find_music_on_db_by_search_key(search_key)
+    download_music_by_id(results, search_key)
+    music_list = search(search_key)
     if music_list is None or music_list.__len__() == 0:
         print('没有歌曲')
         print('切换搜索源...')
-        tongzhong_crawl.run(singer_name)
+        tongzhong_crawl.run(search_key)
         sys.exit(0)
     sql = "insert into tb_music(song_name,download_url,singer_name) values(%s,%s,%s)"
     cursor.executemany(sql, music_list)
     connect.commit()
-    results = find_music_on_db_by_singer_name(singer_name)
-    download_music_by_id(results)
+    results = find_music_on_db_by_search_key(search_key)
+    download_music_by_id(results, search_key)
     cursor.close()
     connect.close()
 
 
+# search_key = input("请输入关键词：")
 if __name__ == '__main__':
     choice()

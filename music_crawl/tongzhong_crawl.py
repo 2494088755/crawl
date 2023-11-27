@@ -1,8 +1,9 @@
 import pandas as pd
+import pymysql
 import requests
 from requests import ReadTimeout
 
-from music_crawl import download_music
+from music_crawl.zz_music_crawl import download_music
 
 search_url = 'https://music-api.tonzhon.com/songs_of_artist/'
 get_download_url_api = 'https://music-api.tonzhon.com/song_file/'
@@ -27,7 +28,15 @@ def get_song_list(key):
         singers = ''
         for singer in song['artists']:
             singers += singer['name'] + '/'
-        song_list.append([song['newId'], song['name'], singers[:-1]])
+        # download_url = requests.get(get_download_url_api + song['newId']).json()['data']
+        song_list.append([song['name'], song['newId'], singers[:-1]])
+    connect = pymysql.connect(host='localhost', user='root', password='root', db='music')
+    cursor = connect.cursor()
+    sql = "insert into tb_music(song_name,download_url,singer_name) values(%s,%s,%s)"
+    cursor.executemany(sql, song_list)
+    connect.commit()
+    cursor.close()
+    connect.close()
     return song_list
 
 
@@ -47,6 +56,7 @@ def download(df):
     singer_name = df.loc[int(index)]['singer']
     print('正在下载：' + song_name + ' - ' + singer_name)
     download_url = requests.get(get_download_url_api + id_).json()['data']
+
     if 'https:' not in download_url:
         download_url = 'https:' + download_url
     download_music(download_url, song_name, singer_name)
@@ -54,4 +64,5 @@ def download(df):
 
 
 def run(key):
+    print('正在搜索：' + key)
     download(print_list(get_song_list(key)))
