@@ -3,6 +3,7 @@ import queue
 import re
 import threading
 import time
+import uuid
 
 import requests
 
@@ -14,6 +15,10 @@ def get_list(url):
         rsplit_ = url.rsplit('/', 1)[0]
         ts_list = re.findall(r'(.*\.ts)', get.text)
         ts_list = [rsplit_ + '/' + ts for ts in ts_list]
+
+    for ts in ts_list:
+        if '\"' in ts:
+            ts_list.remove(ts)
     return ts_list
 
 
@@ -21,7 +26,7 @@ def download(thread_name, q):
     os.path.exists('D:\\ts') or os.mkdir('D:\\ts')
     ts = q.get()
     print(thread_name + '-开始下载' + ts)
-    with open('D:\\ts\\' + ts.split('/')[-1], 'wb') as f:
+    with open('D:\\ts\\' + uuid.uuid4().hex + '.ts', 'wb') as f:
         f.write(requests.get(ts).content)
     print(thread_name + '-下载完成')
     print('剩余' + str(q.qsize()) + '个ts文件')

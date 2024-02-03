@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import pymysql
 import requests
@@ -41,7 +43,7 @@ def get_song_list(key):
 
 
 def print_list(song_list):
-    header = ['id', 'name', 'singer']
+    header = ['name', 'id', 'singer']
     # 设置value的显示长度为100，默认为50
     pd.set_option('max_colwidth', 100)
     df = pd.DataFrame(columns=header, data=song_list)
@@ -50,19 +52,33 @@ def print_list(song_list):
 
 
 def download(df):
+    # 输入序号下载指定歌曲
     index = input('输入序号下载指定歌曲:')
+    # 从数据框中获取指定序号的歌曲id、歌曲名和歌手名
     id_ = df.loc[int(index)]['id']
     song_name = df.loc[int(index)]['name']
     singer_name = df.loc[int(index)]['singer']
+    # 打印歌曲id、歌曲名和歌手名
+    print(id_)
+    print(song_name)
+    print(singer_name)
+    # 打印正在下载的歌曲信息
     print('正在下载：' + song_name + ' - ' + singer_name)
+    # 获取歌曲下载链接
     download_url = requests.get(get_download_url_api + id_).json()['data']
-
+    # 如果下载链接不是以'https:'开头，则在前面添加'https:'
     if 'https:' not in download_url:
         download_url = 'https:' + download_url
+    # 下载歌曲
     download_music(download_url, song_name, singer_name)
+    # 打印下载完成
     print('下载完成')
 
 
 def run(key):
     print('正在搜索：' + key)
     download(print_list(get_song_list(key)))
+
+
+if __name__ == '__main__':
+    run('王菲')
