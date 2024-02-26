@@ -26,8 +26,8 @@ class MyFreeMP3:
                     attrs={'class': 'arco-row arco-row-align-center arco-row-justify-start h-12 px-2'})
                 for i in find_all:
                     title = i.find_next(attrs={'class', 'text-sm'}).text
-                    singer = i.find_next(attrs={'class', 'hover:underline cursor-pointer'}).text
-                    # singer = i.find_next('mark').text
+                    # singer = i.find_next(attrs={'class', 'hover:underline cursor-pointer'}).text
+                    singer = i.find_next('mark').text
                     songs.append({'index': index, 'title': title, 'singer': singer})
                     index += 1
                 break
@@ -82,5 +82,5 @@ class MyFreeMP3:
 
 
 if __name__ == '__main__':
-    my_free_mp3 = MyFreeMP3('王菲')
+    my_free_mp3 = MyFreeMP3(input('输入歌曲名:'))
     my_free_mp3.download()
