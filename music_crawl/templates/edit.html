@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑歌曲</title>
+</head>
+<body>
+    <h1>编辑歌曲</h1>
+    <form action="{{ url_for('edit', id=song.id) }}" method="post">
+        <label for="song_name">歌名：</label>
+        <input type="text" name="song_name" id="song_name" value="{{ song.song_name }}">
+        <br>
+        <label for="download_url">下载地址：</label>
+        <input type="text" name="download_url" id="download_url" value="{{ song.download_url }}">
+        <br>
+        <label for="singer_name">歌手：</label>
+        <input type="text" name="singer_name" id="singer_name" value="{{ song.singer_name }}">
+        <br>
+        <button type="submit">修改</button>
+    </form>
+</body>
+</html>

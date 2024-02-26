@@ -1,0 +1,75 @@
+<table id="song-table" style="width: 80%; border: 1px solid #ddd;">
+  <thead>
+    <tr style="background-color: #f7f7f7;">
+      <th style="text-align: center;">ID</th>
+      <th>歌名</th>
+      <th>下载地址</th>
+      <th>歌手</th>
+      <th style="text-align: center;">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for song in songs %}
+    <tr style="background-color: {{ song.row_color }}">
+      <td style="text-align: center;">{{ song.id }}</td>
+      <td>{{ song.song_name }}</td>
+      <td>{{ song.download_url }}</td>
+      <td>{{ song.singer_name }}</td>
+      <td style="text-align: center;">
+        <a href="{{ url_for('edit', id=song.id) }}">
+          <i class="fa fa-edit"></i>
+        </a>
+        <a href="{{ url_for('delete', id=song.id) }}">
+          <i class="fa fa-trash"></i>
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+$(document).ready(function() {
+  // 添加排序功能
+  $("#song-table").DataTable({
+    ordering: true,
+  });
+
+  // 添加筛选功能
+  $("#song-table").DataTable({
+    searching: true,
+  });
+
+  // 添加悬停提示
+  $("#song-table").DataTable({
+    info: false,
+    paging: false,
+  });
+
+  // 添加可编辑单元格
+  $("#song-table").DataTable({
+    columns: [
+      {
+        targets: 0,
+        editable: false,
+      },
+      {
+        targets: 1,
+        editable: true,
+      },
+      {
+        targets: 2,
+        editable: true,
+      },
+      {
+        targets: 3,
+        editable: false,
+      },
+      {
+        targets: 4,
+        editable: false,
+      },
+    ],
+  });
+});
+</script>
